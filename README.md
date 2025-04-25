@@ -4,7 +4,7 @@ An editor for MiSTer NES palette files. This is a Windows app built in C# with .
 
 ## Screenshots
 
-![MiSTerNESPaletteEditor.EXE](MiSTerNESPaletteEditor/assets/screenshot.png)
+![MiSTerNESPaletteEditor.EXE](MiSTerNESPaletteEditor/Assets/screenshot.png)
 
 ## Installation
 
