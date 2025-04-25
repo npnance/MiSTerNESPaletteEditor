@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MiSTerNESPaletteEditor (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "MiSTerNESPaletteEditor (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
