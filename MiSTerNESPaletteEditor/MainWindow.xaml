@@ -9,7 +9,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     mc:Ignorable="d"
     Width="1240" 
-    Height="800"
+    Height="1080"
     Title="MiSTer NES Palette Editor"
     >
 
@@ -18,7 +18,7 @@
         <!--<winuiex:TransparentTintBackdrop TintColor="#55cc3333" />-->
     </Window.SystemBackdrop>
     
-    <StackPanel Name="ColorPanel" 
+    <StackPanel x:Name="ColorPanel" 
                 Orientation="Vertical" 
                 HorizontalAlignment="Stretch" 
                 VerticalAlignment="Stretch" 
@@ -78,8 +78,8 @@
                         Modifiers="Menu" />
                 </Button.KeyboardAccelerators>
                 Load palette
-            </Button>            
-            
+            </Button>
+
             <ProgressRing 
                 IsActive="{x:Bind progressRingState, Mode=OneWay}"
                 Width="60"
@@ -91,17 +91,23 @@
                 />
         </StackPanel>
 
-        <GridView Name="colorGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+        <GridView x:Name="colorGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
                   BorderBrush="Gray"
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch">
+            <!--<GridView.ItemTemplate>
+                <DataTemplate x:DataType="local:PaletteColor">
+                    <TextBlock Text="{x:Bind Index, Mode=OneWay}" />
+                </DataTemplate>
+            </GridView.ItemTemplate>-->
+            
             <GridView.ItemTemplate>
                 <DataTemplate x:DataType="local:PaletteColor">
-                    <Grid Name="colorGridInside"
+                    <Grid x:Name="colorGridInside"
                           BorderBrush="LightGray"
                           BorderThickness="2">
                         <Grid.Resources>
-                            <ThemeShadow x:Name="SharedShadow" />
+                            <ThemeShadow x:Key="SharedShadow" />
                         </Grid.Resources>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -120,13 +126,12 @@
                                     HorizontalAlignment="Stretch"
                                     VerticalAlignment="Stretch">
 
-                            <TextBlock Text="{x:Bind Index}" 
+                            <TextBlock Text="{x:Bind Index, Mode=OneWay}" 
                                        HorizontalAlignment="Center" 
                                        VerticalAlignment="Center"                                        
                                        Style="{ThemeResource TitleTextBlockStyle}" Shadow="{StaticResource SharedShadow}"
-                                       Foreground="{x:Bind IndexTextColor}"
+                                       Foreground="{x:Bind IndexTextColor, Mode=OneWay}"
                             >
-
                             </TextBlock>
                         </StackPanel>
                         
@@ -144,7 +149,7 @@
                             Margin="0,0,10,0"
                             BorderThickness="1"
                             BorderBrush="DarkSlateGray"
-                            Style="{ThemeResource BaseTextBlockStyle}"
+                            
                             TextChanging="textBox_TextChanging"
                             HorizontalAlignment="Stretch" 
                             VerticalAlignment="Center">                            

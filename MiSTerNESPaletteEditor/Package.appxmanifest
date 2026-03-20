@@ -9,8 +9,8 @@
 
   <Identity
     Name="cb2a1725-e842-4151-9793-6d5320cd8a9d"
-    Publisher="CN=nn"
-    Version="0.1.0.0" />
+    Publisher="CN=Boiled Pudding Media Corp"
+    Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="cb2a1725-e842-4151-9793-6d5320cd8a9d" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

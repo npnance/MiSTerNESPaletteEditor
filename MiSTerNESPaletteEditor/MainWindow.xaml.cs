@@ -4,9 +4,10 @@ using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using WinRT.Interop;
 using WinUIEx;
 using Color = Windows.UI.Color;
@@ -33,11 +34,24 @@ namespace MiSTerNESPaletteEditor
 
         private string AssemblyVersion => "v" + typeof(MainWindow).Assembly?.GetName()?.Version?.ToString() ?? "?.?.?";
 
-        private void PaletteLoad_Click(object sender, RoutedEventArgs e)
+        public async Task ShowAlertAsync(string title, string message, string cancel = "OK")
+        {
+            var dialog = new ContentDialog
+            {
+                Title = title,
+                Content = message,
+                CloseButtonText = cancel,
+                XamlRoot = this.Content.XamlRoot
+            };
+
+            await dialog.ShowAsync();
+        }
+
+        private async void PaletteLoad_Click(object sender, RoutedEventArgs e)
         {
             byte[] fileBytes = File.ReadAllBytes(inputFilename);
 
-            colors = new List<PaletteColor>();
+            colors = new List<PaletteColor>();            
 
             for (var i = 0; i < fileBytes.Length / 3; i++)
             {
@@ -51,9 +65,18 @@ namespace MiSTerNESPaletteEditor
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex.Message);
+                    await ShowAlertAsync("Alert Title", $"Error loading palette: {ex.Message}");
                 }
+            }
 
+            try
+            {
                 colorGrid.ItemsSource = colors;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                await ShowAlertAsync("Alert Title", $"Error displaying palette: {ex.Message}");
             }
         }
 
@@ -176,84 +199,78 @@ namespace MiSTerNESPaletteEditor
 
         public int Position { get; set; }
 
-        public int Index => (Position) + 1;
+        public int Index => Position + 1;
 
         public Color Color => Color.FromArgb(255, R, G, B);
 
         public Brush BrushColor => new SolidColorBrush(Color);
 
+        public string RGB => $"({R},{G},{B})";
+
         public string Hex
         {
-            get
-            {
-                return ColorTranslator.ToHtml(System.Drawing.Color.FromArgb(255, R, G, B));
-            }
-
+            get => $"#{R:X2}{G:X2}{B:X2}";
             set
             {
-                try
-                {
-                    var c = ColorTranslator.FromHtml(value);
-                    R = c.R;
-                    G = c.G;
-                    B = c.B;
-                }
-                catch (Exception)
-                {
-                    // TODO: I've never said this, but don't swallow
-                }
+                if (string.IsNullOrWhiteSpace(value))
+                    return;
 
-                RaisePropertyChanged(string.Empty);
+                var s = value.Trim();
+                if (s.StartsWith("#"))
+                    s = s[1..];
+
+                if (s.Length != 6)
+                    return;
+
+                if (byte.TryParse(s.Substring(0, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var r) &&
+                    byte.TryParse(s.Substring(2, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var g) &&
+                    byte.TryParse(s.Substring(4, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var b))
+                {
+                    R = r;
+                    G = g;
+                    B = b;
+
+                    RaisePropertyChanged(nameof(R));
+                    RaisePropertyChanged(nameof(G));
+                    RaisePropertyChanged(nameof(B));
+                    RaisePropertyChanged(nameof(Color));
+                    RaisePropertyChanged(nameof(BrushColor));
+                    RaisePropertyChanged(nameof(Hex));
+                    RaisePropertyChanged(nameof(RGB));
+                    RaisePropertyChanged(nameof(IndexTextColor));
+                }
             }
         }
 
-        public string RGB => $"({R},{G},{B})";
-
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public void RaisePropertyChanged([CallerMemberName] string propName = null)
+        public void RaisePropertyChanged(string propName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
         }
 
         public Brush IndexTextColor
         {
-            // from: https://stackoverflow.com/a/3943023
-
             get
             {
-                var thisColor = new SolidColorBrush();
-
                 var r = CalculateLuminanceForColor(R);
                 var g = CalculateLuminanceForColor(G);
                 var b = CalculateLuminanceForColor(B);
 
-                double L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                double l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
-                if (L > 0.179)
-                {
-                    thisColor = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 0, 0, 0));
-                }
-                else
-                {
-                    thisColor = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 255, 255, 255));
-                }
-
-                return thisColor;
+                return l > 0.179
+                    ? new SolidColorBrush(Color.FromArgb(255, 0, 0, 0))
+                    : new SolidColorBrush(Color.FromArgb(255, 255, 255, 255));
             }
         }
 
         private double CalculateLuminanceForColor(int color)
         {
             double c = color / 255.0;
-
-            if (c <= 0.04045) {
-                c = c / 12.92;
-            } else {
-                c = Math.Pow((c + 0.055) / 1.055, 2.4);
-            }
-
-            return c;
+            return c <= 0.04045
+                ? c / 12.92
+                : Math.Pow((c + 0.055) / 1.055, 2.4);
         }
     }
 }

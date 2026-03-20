@@ -1,21 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.UI.Xaml;
+using System;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Shapes;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+using System.Text;
+using System.Threading.Tasks;
 using WinUIEx;
+using Path = System.IO.Path;
 
 namespace MiSTerNESPaletteEditor
 {
@@ -24,13 +13,64 @@ namespace MiSTerNESPaletteEditor
     /// </summary>
     public partial class App : Application
     {
-        /// <summary>
-        /// Initializes the singleton application object.  This is the first line of authored code
-        /// executed, and as such is the logical equivalent of main() or WinMain().
-        /// </summary>
+
         public App()
         {
             this.InitializeComponent();
+
+            this.UnhandledException += App_UnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+        }
+
+        private void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+        {
+            LogException("WinUI UnhandledException", e.Exception);
+            e.Handled = true; // optional; only if you want to try continuing
+        }
+
+        private void CurrentDomain_UnhandledException(object sender, System.UnhandledExceptionEventArgs e)
+        {
+            LogException("AppDomain UnhandledException", e.ExceptionObject as Exception);
+        }
+
+        private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+        {
+            LogException("TaskScheduler UnobservedTaskException", e.Exception);
+            e.SetObserved();
+        }
+
+        private static void LogException(string source, Exception? ex)
+        {
+            try
+            {
+                var path = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "MiSTerNESPaletteEditor",
+                    "crash.log");
+
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+                var sb = new StringBuilder();
+                sb.AppendLine("========================================");
+                sb.AppendLine(DateTime.Now.ToString("O"));
+                sb.AppendLine(source);
+
+                if (ex != null)
+                {
+                    sb.AppendLine(ex.ToString());
+                }
+                else
+                {
+                    sb.AppendLine("Exception object was null.");
+                }
+
+                File.AppendAllText(path, sb.ToString());
+            }
+            catch
+            {
+                // last resort: never throw from logger
+            }
         }
 
         /// <summary>
@@ -42,11 +82,11 @@ namespace MiSTerNESPaletteEditor
             m_window = new MainWindow();
             m_window.CenterOnScreen();
 
-            var windowMangler = WinUIEx.WindowManager.Get(m_window);
-            windowMangler.PersistenceId = "MainWindowPersistanceId";
-            windowMangler.MinWidth = 640;
-            windowMangler.MinHeight = 480;
-            
+            //var windowMangler = WinUIEx.WindowManager.Get(m_window);
+            //windowMangler.PersistenceId = null;// "MainWindowPersistanceId";
+            //windowMangler.MinWidth = 640;
+            //windowMangler.MinHeight = 480;
+
             //m_window.SystemBackdrop = new MicaBackdrop();
 
             m_window.Activate();
